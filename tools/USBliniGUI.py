@@ -32,7 +32,7 @@ class App(tk.Tk):
     def __init__(self, serial):
         super().__init__()
 
-        title = 'USBliniGUI v0.1'
+        title = 'USBliniGUI v1.0'
         if serial != None:
            title = title + ' (' + serial + ')'
         self.title(title)
@@ -56,6 +56,8 @@ class App(tk.Tk):
         topframe = Frame(self)
         clearbutton = tk.Button(topframe, text='Clear', command=self.clear)
         clearbutton.pack(side='left')
+        logbutton = tk.Button(topframe, text='Save', command=self.savelog)
+        logbutton.pack(side='left')
         self.follow = IntVar(value=1)
         ttk.Checkbutton(topframe, text="Follow", variable=self.follow).pack(side='right')
 
@@ -182,7 +184,7 @@ class App(tk.Tk):
         tk.Button(tabError, text='Clear', command=self.clearErrors).pack(side='top')
 
 
-        Label(tabLogic, text='Sample logic level on RX pin with 100 sps and save it in \nPulseView (sigrok project) compatible file for further analysis.', justify=LEFT).pack(side='top', padx=5, pady=10, anchor='w')
+        Label(tabLogic, text='Sample logic level on RX pin with 100 ksps and save it in \nPulseView (sigrok project) compatible file for further analysis.', justify=LEFT).pack(side='top', padx=5, pady=10, anchor='w')
         filenameFrame = Frame(tabLogic)
         Label(filenameFrame, text='Filename:').pack(side='left')
         self.logicfilenameentry = tk.Entry(filenameFrame, width=40)
@@ -298,6 +300,15 @@ class App(tk.Tk):
 
     def clear(self):
         self.tree.delete(*self.tree.get_children())
+
+    def savelog(self):
+        file_name = asksaveasfilename()
+        with open(file_name, 'w') as logfile:
+            for child in self.tree.get_children():
+                values = self.tree.item(child)["values"]
+                logfile.write("{}\t{}\t{}\n".format(values[0], values[1], values[2]))
+            logfile.close()
+        self.showMessage('Saved messages to file')
 
     def send(self):
         length = int(self.sbox.get())
