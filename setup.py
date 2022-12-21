@@ -22,7 +22,7 @@ def readme():
         return f.read()
 
 setup(name='usblini',
-      version='1.0',
+      version='1.1',
       description='USBlini - USB to LIN interface',
       long_description=readme(),
       classifiers=[
