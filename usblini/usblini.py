@@ -1,6 +1,6 @@
 # This file is part of the pyUSBlini project.
 #
-# Copyright(c) 2021 Thomas Fischl (https://www.fischl.de)
+# Copyright(c) 2021-2022 Thomas Fischl (https://www.fischl.de)
 # 
 # pyUSBlini is free software: you can redistribute it and/or modify
 # it under the terms of the GNU LESSER GENERAL PUBLIC LICENSE as published by
@@ -107,10 +107,15 @@ class USBlini(object):
 
         for device in self.ctx.getDeviceIterator():
             if device.getVendorID() == self.USB_VID and device.getProductID() == self.USB_PID:
+                
                 if serialnumber is None:
                     return device
-                elif device.getSerialNumber() == serialnumber:
-                    return device        
+
+                try:
+                    if device.getSerialNumber() == serialnumber:
+                        return device
+                except usb1.USBErrorAccess:
+                    pass
 
     def usbtransfer_ep1_callback(self, t):
         data = t.getBuffer()[:t.getActualLength()]
