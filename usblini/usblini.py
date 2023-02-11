@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU LESSER GENERAL PUBLIC LICENSE
 # along with pyUSBlini.  If not, see <http://www.gnu.org/licenses/>
 
-import libusb1
 import usb1
 import threading
 
@@ -56,6 +55,7 @@ class USBlini(object):
         self.frame_listeners = []
         self.statusreport_listeners = []
         self.logic_listeners = []
+        self.ctx = usb1.USBContext()
 
     def open(self, serialnumber = None):
         """
@@ -63,6 +63,8 @@ class USBlini(object):
         :param serialnumber: USB serial number
         :type serialnumber: string
         """
+
+        self.ctx.open()
 
         self.usbdev = self.get_usb_device(serialnumber)
         if self.usbdev is None:
@@ -95,6 +97,7 @@ class USBlini(object):
         self.eventthread.stop()
         self.eventthread.join()
         self.usbdev.close()
+        self.ctx.close()
 
     def get_usb_device(self, serialnumber = None):
         """
@@ -103,8 +106,6 @@ class USBlini(object):
         :param serialnumber: USB serial number
         :type serialnumber: string       
         """
-        self.ctx = usb1.LibUSBContext()
-
         for device in self.ctx.getDeviceIterator():
             if device.getVendorID() == self.USB_VID and device.getProductID() == self.USB_PID:
                 
@@ -148,20 +149,20 @@ class USBlini(object):
         """
         Jump to bootloader.
         """
-        self.usbhandle.controlWrite(libusb1.LIBUSB_TYPE_CLASS, self.CMD_START_BOOTLOADER, 0x5237, 0, [])        
+        self.usbhandle.controlWrite(usb1.TYPE_CLASS, self.CMD_START_BOOTLOADER, 0x5237, 0, [])
 
     def echo_test(self):
         """
         Echo test. Send code to device and check response.
         """
-        response = self.usbhandle.controlRead(libusb1.LIBUSB_TYPE_CLASS, self.CMD_ECHO, 0x1234, 0, 2)
+        response = self.usbhandle.controlRead(usb1.TYPE_CLASS, self.CMD_ECHO, 0x1234, 0, 2)
         return (response[0] == 0x34) and (response[1] == 0x12) 
 
     def reset(self):
         """
         Reset the device: clear master and slave tables and set default configuration.
         """
-        self.usbhandle.controlWrite(libusb1.LIBUSB_TYPE_CLASS, self.CMD_RESET, 0, 0, [])        
+        self.usbhandle.controlWrite(usb1.TYPE_CLASS, self.CMD_RESET, 0, 0, [])
 
 
     def set_baudrate(self, baudrate, autobaud = False):
@@ -172,7 +173,7 @@ class USBlini(object):
         :param autobaud: Set autobaud feature (only slave functions use it)
         :type autobaud: bool
         """
-        self.usbhandle.controlWrite(libusb1.LIBUSB_TYPE_CLASS, self.CMD_SET_BAUDRATE, baudrate, int(autobaud), [])  
+        self.usbhandle.controlWrite(usb1.TYPE_CLASS, self.CMD_SET_BAUDRATE, baudrate, int(autobaud), [])
 
     def slave_set_frame(self, tableid, frameid, checksummode, data, reloadvalue = 0, resetmask = 0):
         """
@@ -190,9 +191,9 @@ class USBlini(object):
         :param resetmask: Bit mask for resetting slave table items (bit0 -> tableid=0, bit1 -> tableid=1, ...)
         :type resetmask: integer
         """
-        self.usbhandle.controlWrite(libusb1.LIBUSB_TYPE_CLASS, self.CMD_SLAVE_SET_FRAME, frameid | checksummode, tableid, data)
-        self.usbhandle.controlWrite(libusb1.LIBUSB_TYPE_CLASS, self.CMD_SLAVE_SET_RELOADVALUE, reloadvalue, tableid, [])
-        self.usbhandle.controlWrite(libusb1.LIBUSB_TYPE_CLASS, self.CMD_SLAVE_SET_RESETMASK, resetmask, tableid, [])
+        self.usbhandle.controlWrite(usb1.TYPE_CLASS, self.CMD_SLAVE_SET_FRAME, frameid | checksummode, tableid, data)
+        self.usbhandle.controlWrite(usb1.TYPE_CLASS, self.CMD_SLAVE_SET_RELOADVALUE, reloadvalue, tableid, [])
+        self.usbhandle.controlWrite(usb1.TYPE_CLASS, self.CMD_SLAVE_SET_RESETMASK, resetmask, tableid, [])
 
     def master_write(self, frameid, checksummode, data):
         """
@@ -206,7 +207,7 @@ class USBlini(object):
         :type data: list(int)
         """
         self.receiveevent.clear()
-        self.usbhandle.controlWrite(libusb1.LIBUSB_TYPE_CLASS, self.CMD_MASTER_WRITE, frameid | checksummode, 0, data)
+        self.usbhandle.controlWrite(usb1.TYPE_CLASS, self.CMD_MASTER_WRITE, frameid | checksummode, 0, data)
         self.receiveevent.wait()
         # TODO: check report id, check pid, check checksum
 
@@ -221,7 +222,7 @@ class USBlini(object):
         :param clearmask: Bit mask of errors to clear
         :type baudrate: integer
         """
-        self.usbhandle.controlWrite(libusb1.LIBUSB_TYPE_CLASS, self.CMD_CLEAR_ERRORFLAGS, clearmask, 0, [])  
+        self.usbhandle.controlWrite(usb1.TYPE_CLASS, self.CMD_CLEAR_ERRORFLAGS, clearmask, 0, [])
 
 
     def master_set_sequence(self, period, frametime, sequence):
@@ -234,7 +235,7 @@ class USBlini(object):
         :param sequence: Sequence of LIN identifiers the master should request periodically
         :type sequence: list(int)
         """
-        self.usbhandle.controlWrite(libusb1.LIBUSB_TYPE_CLASS, self.CMD_MASTER_SET_SEQUENCE, period, frametime, sequence)
+        self.usbhandle.controlWrite(usb1.TYPE_CLASS, self.CMD_MASTER_SET_SEQUENCE, period, frametime, sequence)
 
     def frame_listener_add(self, func):
         """
