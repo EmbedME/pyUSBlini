@@ -77,15 +77,15 @@ class USBlini(object):
 
         th1 = usb1.USBTransferHelper()
         th1.setEventCallback(usb1.TRANSFER_COMPLETED, self.usbtransfer_ep1_callback)
-        t1 = self.usbhandle.getTransfer()
-        t1.setInterrupt(0x81, 64, th1)
-        t1.submit()
+        self.t1 = self.usbhandle.getTransfer()
+        self.t1.setInterrupt(0x81, 64, th1)
+        self.t1.submit()
 
         th2 = usb1.USBTransferHelper()
         th2.setEventCallback(usb1.TRANSFER_COMPLETED, self.usbtransfer_ep2_callback)
-        t2 = self.usbhandle.getTransfer()
-        t2.setInterrupt(0x82, 64, th2)
-        t2.submit()
+        self.t2 = self.usbhandle.getTransfer()
+        self.t2.setInterrupt(0x82, 64, th2)
+        self.t2.submit()
 
         self.eventthread = USBliniUSBEventHandler(self)
         self.eventthread.start()
@@ -94,6 +94,8 @@ class USBlini(object):
         """
         Close connection to USBlini.
         """
+        self.t1.doom()
+        self.t2.doom()
         self.eventthread.stop()
         self.eventthread.join()
         self.usbdev.close()
@@ -351,7 +353,6 @@ class USBliniUSBEventHandler(threading.Thread):
             self.lini.ctx.handleEvents()
     def stop(self):
         self.running = False
-        self.lini.echo_test()
 
 class USBliniError(Exception):
     def __init__(self):
