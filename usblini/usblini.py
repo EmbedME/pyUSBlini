@@ -214,7 +214,7 @@ class USBlini(object):
         # TODO: check report id, check pid, check checksum
 
         if self.response[0] & self.MASK_REPORT_TYPE == self.REPORT_TYPE_ERROR:
-            raise USBliniError()
+            raise USBliniError("Error while master write. Please check bus connection (Vbat applied, master-pullup active)!")
 
         return self.response[3:3+self.response[2]]
 
