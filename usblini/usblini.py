@@ -68,7 +68,7 @@ class USBlini(object):
 
         self.usbdev = self.get_usb_device(serialnumber)
         if self.usbdev is None:
-            raise USBliniNotFoundError()
+            raise USBliniNotFoundError("USBlini not found. Please check connection - no charge-only USB cable?")
 
         self.usbhandle = self.usbdev.open()
         self.usbhandle.claimInterface(0)        
@@ -355,9 +355,9 @@ class USBliniUSBEventHandler(threading.Thread):
         self.running = False
 
 class USBliniError(Exception):
-    def __init__(self):
-        Exception.__init__(self)
+    def __init__(self, message):
+        Exception.__init__(self, message)
 
 class USBliniNotFoundError(USBliniError):
-    def __init__(self):
-        Exception.__init__(self)
+    def __init__(self, message):
+        Exception.__init__(self, message)
