@@ -1,6 +1,6 @@
 # This file is part of the pyUSBlini project.
 #
-# Copyright(c) 2021 Thomas Fischl (https://www.fischl.de)
+# Copyright(c) 2021-2023 Thomas Fischl (https://www.fischl.de)
 # 
 # pyUSBlini is free software: you can redistribute it and/or modify
 # it under the terms of the GNU LESSER GENERAL PUBLIC LICENSE as published by
@@ -32,7 +32,7 @@ class App(tk.Tk):
     def __init__(self, serial):
         super().__init__()
 
-        title = 'USBliniGUI v1.0'
+        title = 'USBliniGUI v1.1'
         if serial != None:
            title = title + ' (' + serial + ')'
         self.title(title)
@@ -211,6 +211,7 @@ class App(tk.Tk):
         self.after(10, self.update_statusreport)
         self.usblini.frame_listener_add(self.frame_listener)
         self.usblini.statusreport_listener_add(self.statusreport_listener)
+        self.LR_LUT = [bytearray([(byte & (1 << (7 - i))) and 0x4F or 0x2E for i in range(8)]) for byte in range(256)]
 
         Label(tabSettings, text='Firmware version: {}'.format(self.usblini.get_version()), justify=LEFT).pack(side='top', padx=5, pady=(20,5), anchor='w')
         tk.Button(tabSettings, text='Start bootloader and exit GUI', command=self.startBootloader).pack(side='top', padx=5, anchor='w')
@@ -357,12 +358,7 @@ class App(tk.Tk):
 
     def logic_listener(self, data):
         for d in data:
-            for i in range(8):
-                if (d & 0x80) == 0:
-                    self.logicoutfile.write(b'\x2E')
-                else:
-                    self.logicoutfile.write(b'\x4F')
-                d = d << 1
+            self.logicoutfile.write(self.LR_LUT[d])
 
 class SlaveTableItem(object):
 
@@ -430,10 +426,7 @@ class SlaveTableItem(object):
     def getResetmask(self):
         return int(self.resetmaskentry.get(), 16)
 
-
-
-if __name__ == '__main__':
-
+def main():
     if len(sys.argv) > 1:
         serial = sys.argv[1]
     else:
@@ -441,3 +434,6 @@ if __name__ == '__main__':
 
     app = App(serial)
     app.mainloop()
+
+if __name__ == '__main__':
+    main()
