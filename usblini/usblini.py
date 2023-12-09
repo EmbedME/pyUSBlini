@@ -1,6 +1,6 @@
 # This file is part of the pyUSBlini project.
 #
-# Copyright(c) 2021-2022 Thomas Fischl (https://www.fischl.de)
+# Copyright(c) 2021-2023 Thomas Fischl (https://www.fischl.de)
 # 
 # pyUSBlini is free software: you can redistribute it and/or modify
 # it under the terms of the GNU LESSER GENERAL PUBLIC LICENSE as published by
@@ -77,15 +77,21 @@ class USBlini(object):
 
         th1 = usb1.USBTransferHelper()
         th1.setEventCallback(usb1.TRANSFER_COMPLETED, self.usbtransfer_ep1_callback)
-        self.t1 = self.usbhandle.getTransfer()
-        self.t1.setInterrupt(0x81, 64, th1)
-        self.t1.submit()
+        self.ep1in_transfer = []
+        for _ in range(4):
+            t = self.usbhandle.getTransfer()
+            t.setInterrupt(0x81, 64, th1)
+            t.submit()
+            self.ep1in_transfer.append(t)
 
         th2 = usb1.USBTransferHelper()
         th2.setEventCallback(usb1.TRANSFER_COMPLETED, self.usbtransfer_ep2_callback)
-        self.t2 = self.usbhandle.getTransfer()
-        self.t2.setInterrupt(0x82, 64, th2)
-        self.t2.submit()
+        self.ep2in_transfer = []
+        for _ in range(4):
+            t = self.usbhandle.getTransfer()
+            t.setInterrupt(0x82, 25*64, th2)
+            t.submit()
+            self.ep2in_transfer.append(t)
 
         self.eventthread = USBliniUSBEventHandler(self)
         self.eventthread.start()
@@ -94,8 +100,19 @@ class USBlini(object):
         """
         Close connection to USBlini.
         """
-        self.t1.doom()
-        self.t2.doom()
+
+        for transfer in self.ep1in_transfer:
+            try:
+                transfer.cancel()
+            except usb1.USBErrorNotFound:
+                pass
+
+        for transfer in self.ep2in_transfer:
+            try:
+                transfer.cancel()
+            except usb1.USBErrorNotFound:
+                pass
+
         self.eventthread.stop()
         self.eventthread.join()
         self.usbdev.close()
