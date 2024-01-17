@@ -1,6 +1,6 @@
 # This file is part of the pyUSBlini project.
 #
-# Copyright(c) 2021-2023 Thomas Fischl (https://www.fischl.de)
+# Copyright(c) 2021-2024 Thomas Fischl (https://www.fischl.de)
 # 
 # pyUSBlini is free software: you can redistribute it and/or modify
 # it under the terms of the GNU LESSER GENERAL PUBLIC LICENSE as published by
@@ -17,14 +17,10 @@
 
 from setuptools import setup
 
-def readme():
-    with open("README.rst") as f:
-        return f.read()
-
 setup(name='usblini',
       version='1.2',
       description='USBlini - USB to LIN interface',
-      long_description=readme(),
+      long_description=open('README.md').read(),
       classifiers=[
           'Development Status :: 5 - Production/Stable',
           'License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)',
